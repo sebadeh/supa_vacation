@@ -1,12 +1,22 @@
-import PropTypes from 'prop-types';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 import Card from '@/components/Card';
 import { ExclamationIcon } from '@heroicons/react/outline';
 
-const Grid = ({ homes = [] }) => {
+const Grid = ({ homes = [], areFavorites = false }) => {
+  const [favorites, setFavorites] = useState(areFavorites ? homes : []);
+
   const isEmpty = homes.length === 0;
 
-  const toggleFavorite = async id => {
-    // TODO: Add/remove home from the authenticated user's favorites
+  const toggleFavorite = (id) => {
+    if (-1 !== favorites.findIndex((home) => home.id === id)) {
+      axios.delete(`/api/homes/${id}/favorite`).then(({ data }) => {});
+    } else {
+      axios.put(`/api/homes/${id}/favorite`).then(({ data }) => {
+        setFavorites(data);
+      });
+    }
   };
 
   return isEmpty ? (
@@ -16,15 +26,20 @@ const Grid = ({ homes = [] }) => {
     </p>
   ) : (
     <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {homes.map(home => (
-        <Card key={home.id} {...home} onClickFavorite={toggleFavorite} />
+      {homes.map((home) => (
+        <Card
+          key={home.id}
+          {...home}
+          onClickFavorite={toggleFavorite}
+          favorite={
+            favorites.findIndex(
+              (favoriteHome) => favoriteHome.id === home.id
+            ) !== -1
+          }
+        />
       ))}
     </div>
   );
-};
-
-Grid.propTypes = {
-  homes: PropTypes.array,
 };
 
 export default Grid;
